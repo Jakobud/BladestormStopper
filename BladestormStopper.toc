@@ -1,12 +1,12 @@
 ## Interface: 11200
-## Title: Bladestorm Stopper
-## Notes: Removes the Ravager's Bladestorm buff when you gain it.
+## Title: BladestormStopper
+## Notes: Automatically removes the Ravager's Bladestorm buff when you get it
 ## Author: Jakobud
-## Version: 0.1
+## Version: 1.0
 ## OptionalDeps: Ace2
 ## SavedVariables: BladestormStopperDB
 ## SavedVariablesPerCharacter: BladestormStopperDBPC
-## X-Category: Interface Enhancements
+## X-Category: Buffs
 
 Libs\AceLibrary\AceLibrary.lua
 Libs\AceOO-2.0\AceOO-2.0.lua

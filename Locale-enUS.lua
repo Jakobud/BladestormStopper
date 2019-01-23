@@ -4,10 +4,10 @@ L:RegisterTranslations("enUS", function() return {
 
   ["Slash Commands"] = { "/bladestormstopper", "/bss"},
 
-  ["Auto Stop"] = true,
-  ["Automatically remove Bladestorm buff when you gain it"] = true,
+  ["Auto-Stop Bladestorm"] = true,
+  ["Automatically remove Bladestorm buff when you get it"] = true,
 
-  ["Stop"] = true,
+  ["Stop Bladestorm"] = true,
   ["Manually remove the Bladestorm buff"] = true,
 
   ["Show Alert"] = true,

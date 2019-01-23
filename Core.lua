@@ -1,22 +1,23 @@
 BladestormStopper = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceEvent-2.0", "AceDB-2.0", "FuBarPlugin-2.0")
 
-local tablet = AceLibrary("Tablet-2.0")
+BladestormStopper.version = "1.0"
 
 local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
+local tablet = AceLibrary("Tablet-2.0")
 
 local options = {
   type="group",
   args = {
     auto = {
       type = "toggle",
-      name = L["Auto Stop"],
-      desc = L["Automatically remove Bladestorm buff when you gain it"],
+      name = L["Auto-Stop Bladestorm"],
+      desc = L["Automatically remove Bladestorm buff when you get it"],
       get = "IsAuto",
       set = "ToggleAuto",
     },
     stop = {
       type = "execute",
-      name = L["Stop"],
+      name = L["Stop Bladestorm"],
       desc = L["Manually remove the Bladestorm buff"],
       func = "Stop",
     },
@@ -32,6 +33,7 @@ local options = {
 
 BladestormStopper:RegisterChatCommand(L["Slash Commands"], options)
 
+-- Register profile databases and default values
 BladestormStopper:RegisterDB("BladestormStopperDB", "BladestormStopperDBPC")
 BladestormStopper:RegisterDefaults("profile", {
   auto = true,
