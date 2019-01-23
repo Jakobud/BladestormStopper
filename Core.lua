@@ -5,20 +5,12 @@ local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
 local options = {
   type='group',
   args = {
-    msg = {
-      type = 'text',
-      name = L["Message"],
-      desc = L["Sets the message to be displayed when you get home."],
-      usage = L["<your message>"],
-      get = "GetMessage",
-      set = "SetMessage",
-    },
-    showInChat = {
+    auto = {
       type = 'toggle',
-      name = L["Show in Chat"],
-      desc = L["If set, your message will be displayed in the General chat window."],
-      get = 'IsShowInChat',
-      set = 'ToggleShowInChat',
+      name = L["Auto Stop"],
+      desc = L["Automatically remove Bladestorm buff when you gain it"],
+      get = 'IsAuto',
+      set = 'ToggleAuto',
     },
     showOnScreen = {
       type = 'toggle',
@@ -34,28 +26,25 @@ BladestormStopper:RegisterChatCommand(L["Slash Commands"], options)
 
 BladestormStopper:RegisterDB("BladestormStopperDB", "BladestormStopperDBPC")
 BladestormStopper:RegisterDefaults("profile", {
-  message = L["Welcome Home!"],
-  showInChat = false,
-  showOnScreen = true,
+  auto = true,
 })
 
-
-function BladestormStopper:OnInitialize()
-
-end
-
+-- Register event when buffs/debuffs change on the player
 function BladestormStopper:OnEnable()
   self:RegisterEvent("PLAYER_AURAS_CHANGED")
 end
 
-function BladestormStopper:OnDisable()
+function BladestormStopper:PLAYER_AURAS_CHANGED()
+  if self.db.profile.auto == true then
+    self:Stop()
 
+  end
 end
 
 -- Bladestorm buff texture
 local bladestormTexture = "ability_whirlwind"
 
-function BladestormStopper:PLAYER_AURAS_CHANGED()
+function BladestormStopper:Stop()
   local i, buffTexture
 
   -- Iterate through all buffs and debuffs
@@ -75,20 +64,14 @@ function BladestormStopper:PLAYER_AURAS_CHANGED()
 
 end
 
-function BladestormStopper:GetMessage()
-  return self.db.profile.message
+-- Determine if automatic Bladestorm buff removal is set
+function BladestormStopper:IsAuto()
+  return self.db.profile.auto
 end
 
-function BladestormStopper:SetMessage(value)
-  self.db.profile.message = value
-end
-
-function BladestormStopper:IsShowInChat()
-  return self.db.profile.showInChat
-end
-
-function BladestormStopper:ToggleShowInChat()
-  self.db.profile.showInChat = not self.db.profile.showInChat
+-- Toggle whether or not automatic Bladestorm buff removal is set
+function BladestormStopper:ToggleAuto()
+  self.db.profile.auto = not self.db.profile.auto
 end
 
 function BladestormStopper:IsShowOnScreen()
