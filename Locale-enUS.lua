@@ -1,6 +1,7 @@
 local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
 
 L:RegisterTranslations("enUS", function() return {
+
   ["Slash Commands"] = { "/bladestormstopper", "/bss"},
 
   ["Auto Stop"] = true,
@@ -13,4 +14,5 @@ L:RegisterTranslations("enUS", function() return {
   ["Show an alert in the chat window when Bladestorm is removed"] = true,
 
   ["Bladestorm has been removed"] = true,
+
 } end)

@@ -3,14 +3,14 @@ BladestormStopper = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceEvent-2
 local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
 
 local options = {
-  type='group',
+  type="group",
   args = {
     auto = {
-      type = 'toggle',
+      type = "toggle",
       name = L["Auto Stop"],
       desc = L["Automatically remove Bladestorm buff when you gain it"],
-      get = 'IsAuto',
-      set = 'ToggleAuto',
+      get = "IsAuto",
+      set = "ToggleAuto",
     },
     stop = {
       type = "execute",
@@ -19,11 +19,11 @@ local options = {
       func = "Stop",
     },
     showAlert = {
-      type = 'toggle',
+      type = "toggle",
       name = L["Show Alert"],
       desc = L["Show an alert in the chat window when Bladestorm is removed"],
-      get = 'IsShowAlert',
-      set = 'ToggleShowAlert',
+      get = "IsShowAlert",
+      set = "ToggleShowAlert",
     },
   }
 }
