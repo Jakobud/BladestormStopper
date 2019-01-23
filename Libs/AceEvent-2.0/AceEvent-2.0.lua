@@ -1,11 +1,10 @@
 --[[
 Name: AceEvent-2.0
-Revision: $Rev: 8887 $
-Author(s): ckknight (ckknight@gmail.com)
-	facboy (<email here>)
-Inspired By: AceEvent 1.x by Turan (<email here>)
+Revision: $Rev: 17803 $
+Developed by: The Ace Development Team (http://www.wowace.com/index.php/The_Ace_Development_Team)
+Inspired By: Ace 1.x by Turan (turan@gryphon.com)
 Website: http://www.wowace.com/
-Documentation: http://wiki.wowace.com/index.php/AceEvent-2.0
+Documentation: http://www.wowace.com/index.php/AceEvent-2.0
 SVN: http://svn.wowace.com/root/trunk/Ace2/AceEvent-2.0
 Description: Mixin to allow for event handling, scheduling, and inter-addon
              communication.
@@ -13,11 +12,12 @@ Dependencies: AceLibrary, AceOO-2.0
 ]]
 
 local MAJOR_VERSION = "AceEvent-2.0"
-local MINOR_VERSION = "$Revision: 8887 $"
+local MINOR_VERSION = "$Revision: 17803 $"
 
 if not AceLibrary then error(MAJOR_VERSION .. " requires AceLibrary") end
 if not AceLibrary:IsNewVersion(MAJOR_VERSION, MINOR_VERSION) then return end
 
+if loadstring("return function(...) return ... end") and AceLibrary:HasInstance(MAJOR_VERSION) then return end -- lua51 check
 if not AceLibrary:HasInstance("AceOO-2.0") then error(MAJOR_VERSION .. " requires AceOO-2.0") end
 
 local AceOO = AceLibrary:GetInstance("AceOO-2.0")
@@ -39,6 +39,17 @@ local AceEvent = Mixin {
 						"UnregisterAllBucketEvents",
 						"IsBucketEventRegistered",
 					   }
+
+local table_setn
+do
+	local version = GetBuildInfo()
+	if string.find(version, "^2%.") then
+		-- 2.0.0
+		table_setn = function() end
+	else
+		table_setn = table.setn
+	end
+end
 
 local weakKey = {__mode="k"}
 local new, del
@@ -99,6 +110,8 @@ function AceEvent:RegisterEvent(event, method, once)
 	end
 	if type(method) == "string" and type(self[method]) ~= "function" then
 		AceEvent:error("Cannot register event %q to method %q, it does not exist", event, method)
+	else
+		assert(type(method) == "function" or type(method) == "string")
 	end
 
 	local AceEvent_registry = AceEvent.registry
@@ -176,12 +189,13 @@ function AceEvent:RegisterAllEvents(method)
 		end
 	end
 
-	if not AceEvent.registry[ALL_EVENTS] then
-		AceEvent.registry[ALL_EVENTS] = new()
+	local AceEvent_registry = AceEvent.registry
+	if not AceEvent_registry[ALL_EVENTS] then
+		AceEvent_registry[ALL_EVENTS] = new()
 		AceEvent.frame:RegisterAllEvents()
 	end
 
-	AceEvent.registry[ALL_EVENTS][self] = method
+	AceEvent_registry[ALL_EVENTS][self] = method
 end
 
 local _G = getfenv(0)
@@ -195,6 +209,8 @@ function AceEvent:TriggerEvent(event, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a
 	end
 	local _G_event = _G.event
 	_G.event = event
+	local lastEvent = AceEvent.currentEvent
+	AceEvent.currentEvent = event
 
 	local AceEvent_onceRegistry = AceEvent.onceRegistry
 	local AceEvent_debugTable = AceEvent.debugTable
@@ -373,145 +389,67 @@ function AceEvent:TriggerEvent(event, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a
 		del(tmp)
 	end
 	_G.event = _G_event
+	AceEvent.currentEvent = lastEvent
 end
-
---------------------
--- schedule heap management
---------------------
 
 -- local accessors
 local getn = table.getn
-local setn = table.setn
 local tinsert = table.insert
 local tremove = table.remove
 local floor = math.floor
-
---------------------
--- sifting functions
-local function hSiftUp(heap, pos, schedule)
-	schedule = schedule or heap[pos]
-	local scheduleTime = schedule.time
-
-	local curr, i = pos, floor(pos/2)
-	local parent = heap[i]
-	while i > 0 and scheduleTime < parent.time do
-		heap[curr], parent.i = parent, curr
-		curr, i = i, floor(i/2)
-		parent = heap[i]
-	end
-	heap[curr], schedule.i = schedule, curr
-	return pos ~= curr
-end
-
-local function hSiftDown(heap, pos, schedule, size)
-	schedule, size = schedule or heap[pos], size or getn(heap)
-	local scheduleTime = schedule.time
-
-	local curr = pos
-	repeat
-		local child, childTime, c
-		-- determine the child to compare with
-		local j = 2 * curr
-		if j > size then
-			break
-		end
-		local k = j + 1
-		if k > size then
-			child = heap[j]
-			childTime, c = child.time, j
-		else
-			local childj, childk = heap[j], heap[k]
-			local jTime, kTime = childj.time, childk.time
-			if jTime < kTime then
-				child, childTime, c = childj, jTime, j
-			else
-				child, childTime, c = childk, kTime, k
-			end
-		end
-		-- do the comparison
-		if scheduleTime <= childTime then
-			break
-		end
-		heap[curr], child.i = child, curr
-		curr = c
-	until false
-	heap[curr], schedule.i = schedule, curr
-	return pos ~= curr
-end
-
---------------------
--- heap functions
-local function hMaintain(heap, pos, schedule, size)
-	schedule, size = schedule or heap[pos], size or getn(heap)
-	if not hSiftUp(heap, pos, schedule) then
-		hSiftDown(heap, pos, schedule, size)
-	end
-end
-
-local function hPush(heap, schedule)
-	tinsert(heap, schedule)
-	hSiftUp(heap, getn(heap), schedule)
-end
-
-local function hPop(heap)
-	local head, tail = heap[1], tremove(heap)
-	local size = getn(heap)
-
-	if size == 1 then
-		heap[1], tail.i = tail, 1
-	elseif size > 1 then
-		hSiftDown(heap, 1, tail, size)
-	end
-	return head
-end
-
-local function hDelete(heap, pos)
-	local size = getn(heap)
-	local tail = tremove(heap)
-	if pos < size then
-		size = size - 1
-		if size == 1 then
-			heap[1], tail.i = tail, 1
-		elseif size > 1 then
-			heap[pos] = tail
-			hMaintain(heap, pos, tail, size)
-		end
-	end
-end
-
 local GetTime = GetTime
+local next = next
+local pairs = pairs
+local unpack = unpack
+
 local delayRegistry
-local delayHeap
+local tmp = {}
 local function OnUpdate()
 	local t = GetTime()
-	-- peek at top of heap
-	local v = delayHeap[1]
-	local v_time = v and v.time
-	while v and v_time <= t do
-		local v_repeatDelay = v.repeatDelay
-		if v_repeatDelay then
-			-- use the event time, not the current time, else timing inaccuracies add up over time
-			v.time = v_time + v_repeatDelay
-			-- re-arrange the heap
-			hSiftDown(delayHeap, 1, v)
-		else
-			-- pop the event off the heap, and delete it from the registry
-			hPop(delayHeap)
-			delayRegistry[v.id] = nil
-		end
-		local event = v.event
-		if type(event) == "function" then
-			event(unpack(v))
-		else
-			AceEvent:TriggerEvent(event, unpack(v))
-		end
-		if not v_repeatDelay then
-			del(v)
-		end
-		v = delayHeap[1]
-		v_time = v and v.time
+	for k,v in pairs(delayRegistry) do
+		tmp[k] = true
 	end
-	if not v then
+	for k in pairs(tmp) do
+		local v = delayRegistry[k]
+		if v then
+			local v_time = v.time
+			if not v_time then
+				delayRegistry[k] = del(v)
+			elseif v_time <= t then
+				local v_repeatDelay = v.repeatDelay
+				if v_repeatDelay then
+					-- use the event time, not the current time, else timing inaccuracies add up over time
+					v.time = v_time + v_repeatDelay
+				end
+				local event = v.event
+				local mem, time
+				if AceEvent_debugTable then
+					mem, time = gcinfo(), GetTime()
+				end
+				if type(event) == "function" then
+					event(unpack(v))
+				else
+					AceEvent:TriggerEvent(event, unpack(v))
+				end
+				if AceEvent_debugTable then
+					mem, time = gcinfo() - mem, GetTime() - time
+					v.mem = v.mem + mem
+					v.timeSpent = v.timeSpent + time
+					v.count = v.count + 1
+				end
+				if not v_repeatDelay then
+					local x = delayRegistry[k]
+					if x and x.time == v_time then -- check if it was manually reset
+						delayRegistry[k] = del(v)
+					end
+				end
+			end
+		end
+	end
+	for k in pairs(tmp) do
+		tmp[k] = nil
+	end
+	if not next(delayRegistry) then
 		AceEvent.frame:Hide()
 	end
 end
@@ -537,10 +475,7 @@ local function ScheduleEvent(self, repeating, event, delay, a1, a2, a3, a4, a5, 
 
 	if not delayRegistry then
 		AceEvent.delayRegistry = new()
-		AceEvent.delayHeap = new()
-		AceEvent.delayHeap.n = 0
 		delayRegistry = AceEvent.delayRegistry
-		delayHeap = AceEvent.delayHeap
 		AceEvent.frame:SetScript("OnUpdate", OnUpdate)
 	end
 	local t
@@ -548,40 +483,42 @@ local function ScheduleEvent(self, repeating, event, delay, a1, a2, a3, a4, a5, 
 		for k in pairs(id) do
 			id[k] = nil
 		end
-		table.setn(id, 0)
 		t = id
 	else
 		t = new()
 	end
-	t.n = 0
-	tinsert(t, a1)
-	tinsert(t, a2)
-	tinsert(t, a3)
-	tinsert(t, a4)
-	tinsert(t, a5)
-	tinsert(t, a6)
-	tinsert(t, a7)
-	tinsert(t, a8)
-	tinsert(t, a9)
-	tinsert(t, a10)
-	tinsert(t, a11)
-	tinsert(t, a12)
-	tinsert(t, a13)
-	tinsert(t, a14)
-	tinsert(t, a15)
-	tinsert(t, a16)
-	tinsert(t, a17)
-	tinsert(t, a18)
-	tinsert(t, a19)
-	tinsert(t, a20)
+	t[1] = a1
+	t[2] = a2
+	t[3] = a3
+	t[4] = a4
+	t[5] = a5
+	t[6] = a6
+	t[7] = a7
+	t[8] = a8
+	t[9] = a9
+	t[10] = a10
+	t[11] = a11
+	t[12] = a12
+	t[13] = a13
+	t[14] = a14
+	t[15] = a15
+	t[16] = a16
+	t[17] = a17
+	t[18] = a18
+	t[19] = a19
+	t[20] = a20
+	table_setn(t, 20)
 	t.event = event
 	t.time = GetTime() + delay
 	t.self = self
 	t.id = id or t
 	t.repeatDelay = repeating and delay
+	if AceEvent_debugTable then
+		t.mem = 0
+		t.count = 0
+		t.timeSpent = 0
+	end
 	delayRegistry[t.id] = t
-	-- insert into heap
-	hPush(delayHeap, t)
 	AceEvent.frame:Show()
 	return t.id
 end
@@ -629,9 +566,7 @@ function AceEvent:CancelScheduledEvent(t)
 	if delayRegistry then
 		local v = delayRegistry[t]
 		if v then
-			hDelete(delayHeap, v.i)
-			delayRegistry[t] = nil
-			del(v)
+			delayRegistry[t] = del(v)
 			if not next(delayRegistry) then
 				AceEvent.frame:Hide()
 			end
@@ -738,9 +673,7 @@ function AceEvent:CancelAllScheduledEvents()
 	if delayRegistry then
 		for k,v in pairs(delayRegistry) do
 			if v.self == self then
-				hDelete(delayHeap, v.i)
-				del(v)
-				delayRegistry[k] = nil
+				delayRegistry[k] = del(v)
 			end
 		end
 		if not next(delayRegistry) then
@@ -857,10 +790,10 @@ function AceEvent:UnregisterBucketEvent(event)
 	local bucket = AceEvent.buckets[event][self]
 
 	if type(event) == "string" then
-		AceEvent.UnregisterEvent(bucket.func, event)
+		AceEvent.UnregisterEvent(self, event)
 	else
 		for _,v in ipairs(event) do
-			AceEvent.UnregisterEvent(bucket.func, v)
+			AceEvent.UnregisterEvent(self, v)
 		end
 	end
 	AceEvent:CancelScheduledEvent(bucket.id)
@@ -895,6 +828,16 @@ end
 function AceEvent:EnableDebugging()
 	if not self.debugTable then
 		self.debugTable = new()
+
+		if delayRegistry then
+			for k,v in pairs(self.delayRegistry) do
+				if not v.mem then
+					v.mem = 0
+					v.count = 0
+					v.timeSpent = 0
+				end
+			end
+		end
 	end
 end
 
@@ -914,7 +857,6 @@ function AceEvent:activate(oldLib, oldDeactivate)
 		self.throttleRegistry = oldLib.throttleRegistry
 		self.delayRegistry = oldLib.delayRegistry
 		self.buckets = oldLib.buckets
-		self.delayHeap = oldLib.delayHeap
 		self.registry = oldLib.registry
 		self.frame = oldLib.frame
 		self.debugTable = oldLib.debugTable
@@ -962,12 +904,17 @@ function AceEvent:activate(oldLib, oldDeactivate)
 	end)
 	if self.delayRegistry then
 		delayRegistry = self.delayRegistry
-		delayHeap = self.delayHeap
 		self.frame:SetScript("OnUpdate", OnUpdate)
 	end
 
 	self:UnregisterAllEvents()
 	self:CancelAllScheduledEvents()
+
+	registeringFromAceEvent = true
+	self:RegisterEvent("LOOT_OPENED", function()
+		SendAddonMessage("LOOT_OPENED", "", "RAID")
+	end)
+	registeringFromAceEvent = nil
 
 	if not self.playerLogin then
 		registeringFromAceEvent = true
@@ -1006,10 +953,13 @@ function AceEvent:activate(oldLib, oldDeactivate)
 		end)
 		self:RegisterEvent("LANGUAGE_LIST_CHANGED", function()
 			if self.registry["MEETINGSTONE_CHANGED"] and self.registry["MEETINGSTONE_CHANGED"][self] then
+				registeringFromAceEvent = true
 				self:UnregisterEvent("MEETINGSTONE_CHANGED")
 				self:RegisterEvent("MINIMAP_ZONE_CHANGED", f, true)
+				registeringFromAceEvent = nil
 			end
 		end)
+		self:ScheduleEvent("AceEvent_FullyInitialized", func, 10)
 		registeringFromAceEvent = nil
 	end
 
