@@ -6,6 +6,9 @@ L:RegisterTranslations("enUS", function() return {
   ["Auto Stop"] = true,
   ["Automatically remove Bladestorm buff when you gain it"] = true,
 
+  ["Stop"] = true,
+  ["Manually remove the Bladestorm buff"] = true,
+
   ["Show Alert"] = true,
   ["Show an alert in the chat window when Bladestorm is removed"] = true,
 

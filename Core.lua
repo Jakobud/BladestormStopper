@@ -12,6 +12,12 @@ local options = {
       get = 'IsAuto',
       set = 'ToggleAuto',
     },
+    stop = {
+      type = "execute",
+      name = L["Stop"],
+      desc = L["Manually remove the Bladestorm buff"],
+      func = "Stop",
+    },
     showAlert = {
       type = 'toggle',
       name = L["Show Alert"],
@@ -38,10 +44,6 @@ end
 function BladestormStopper:PLAYER_AURAS_CHANGED()
   if self.db.profile.auto == true then
     self:Stop()
-
-    if self.db.profile.showAlert == true then
-      self:Print(L["Bladestorm has been removed"])
-    end
   end
 end
 
@@ -59,9 +61,17 @@ function BladestormStopper:Stop()
 
     if not buffTexture then break end
 
-    -- If buff is the Ravager's Bladestorm buff texture, cancel the buff
+    -- If the Bladestorm buff is found...
     if (string.find(string.lower(buffTexture), bladestormTexture)) then
+
+      -- Remove the buff
       CancelPlayerBuff(i)
+
+      -- Optionally print out an alert
+      if self.db.profile.showAlert == true then
+        self:Print(L["Bladestorm has been removed"])
+      end
+
       break
     end
   end
