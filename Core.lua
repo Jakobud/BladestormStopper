@@ -1,4 +1,4 @@
-BladestormStopper = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceEvent-2.0", "AceDB-2.0")
+BladestormStopper = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceEvent-2.0", "AceDB-2.0", "FuBarPlugin-2.0")
 
 local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
 
@@ -35,6 +35,16 @@ BladestormStopper:RegisterDefaults("profile", {
   auto = true,
   showAlert = false,
 })
+
+-- Fubar configuration
+BladestormStopper.hasIcon = true
+BladestormStopper.hasNoColor = true
+BladestormStopper.defaultMinimapPosition = 180
+BladestormStopper.hideWithoutStandby = true
+BladestormStopper.cannotAttachToMinimap = true
+BladestormStopper.defaultPosition = "LEFT"
+BladestormStopper.OnMenuRequest = options
+
 
 -- Register event when buffs/debuffs change on the player
 function BladestormStopper:OnEnable()
