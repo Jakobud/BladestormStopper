@@ -1,5 +1,7 @@
 BladestormStopper = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceEvent-2.0", "AceDB-2.0", "FuBarPlugin-2.0")
 
+local tablet = AceLibrary("Tablet-2.0")
+
 local L = AceLibrary("AceLocale-2.2"):new("BladestormStopper")
 
 local options = {
@@ -44,6 +46,16 @@ BladestormStopper.hideWithoutStandby = true
 BladestormStopper.cannotAttachToMinimap = true
 BladestormStopper.defaultPosition = "LEFT"
 BladestormStopper.OnMenuRequest = options
+
+-- Fubar on click event
+function BladestormStopper:OnClick()
+  self:Stop()
+end
+
+-- Fubar tooltip update
+function BladestormStopper:OnTooltipUpdate()
+  tablet:SetHint(L["Click to remove the Bladestorm buff"])
+end
 
 
 -- Register event when buffs/debuffs change on the player

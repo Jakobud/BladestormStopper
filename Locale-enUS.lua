@@ -15,4 +15,6 @@ L:RegisterTranslations("enUS", function() return {
 
   ["Bladestorm has been removed"] = true,
 
+  ["Click to remove the Bladestorm buff"] = true,
+
 } end)
