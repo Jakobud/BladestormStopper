@@ -12,13 +12,13 @@ local options = {
       get = 'IsAuto',
       set = 'ToggleAuto',
     },
-    showOnScreen = {
+    showAlert = {
       type = 'toggle',
-      name = L["Show on Screen"],
-      desc = L["If set, your message will be displayed on the screen near the top of the game field."],
-      get = 'IsShowOnScreen',
-      set = 'ToggleShowOnScreen',
-    }
+      name = L["Show Alert"],
+      desc = L["Show an alert in the chat window when Bladestorm is removed"],
+      get = 'IsShowAlert',
+      set = 'ToggleShowAlert',
+    },
   }
 }
 
@@ -27,6 +27,7 @@ BladestormStopper:RegisterChatCommand(L["Slash Commands"], options)
 BladestormStopper:RegisterDB("BladestormStopperDB", "BladestormStopperDBPC")
 BladestormStopper:RegisterDefaults("profile", {
   auto = true,
+  showAlert = false,
 })
 
 -- Register event when buffs/debuffs change on the player
@@ -38,6 +39,9 @@ function BladestormStopper:PLAYER_AURAS_CHANGED()
   if self.db.profile.auto == true then
     self:Stop()
 
+    if self.db.profile.showAlert == true then
+      self:Print(L["Bladestorm has been removed"])
+    end
   end
 end
 
@@ -74,10 +78,12 @@ function BladestormStopper:ToggleAuto()
   self.db.profile.auto = not self.db.profile.auto
 end
 
-function BladestormStopper:IsShowOnScreen()
-  return self.db.profile.showOnScreen
+-- Determine if an alert is shown in chat when the Bladestorm buff is removed
+function BladestormStopper:IsShowAlert()
+  return self.db.profile.showAlert
 end
 
-function BladestormStopper:ToggleShowOnScreen()
-  self.db.profile.showOnScreen = not self.db.profile.showOnScreen
+-- Toggle whether or not to show an alert in chat when the Bladestorm buff is removed
+function BladestormStopper:ToggleShowAlert()
+  self.db.profile.showAlert = not self.db.profile.showAlert
 end
