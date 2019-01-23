@@ -52,8 +52,26 @@ function BladestormStopper:OnDisable()
 
 end
 
+-- Bladestorm buff texture
+local bladestormTexture = "ability_whirlwind"
+
 function BladestormStopper:PLAYER_AURAS_CHANGED()
-  self:Print("Buffs Changed")
+  local i, buffTexture
+
+  -- Iterate through all buffs and debuffs
+  for i=0,31 do
+
+    -- Get the buff texture
+    buffTexture = GetPlayerBuffTexture(i)
+
+    if not buffTexture then break end
+
+    -- If buff is the Ravager's Bladestorm buff texture, cancel the buff
+    if (string.find(string.lower(buffTexture), bladestormTexture)) then
+      CancelPlayerBuff(i)
+      break
+    end
+  end
 
 end
 
