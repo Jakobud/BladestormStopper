@@ -1,6 +1,6 @@
 # BladestormStopper
 
-Automatically (or manually) remove the Ravager's Bladestorm buff when you gain it.
+A World of Warcraft Addon that will automatically (or manually) remove the Ravager's Bladestorm buff when you gain it.
 
 ### Why?
 
